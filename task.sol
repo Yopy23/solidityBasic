@@ -20,7 +20,7 @@ contract StudentRegistry {
         fullName: _fullName,
         Enrolled: !_status,
         Expelled: _status});
-        // graduated обработка
+        // graduated обработка нужна
     } 
 
 
