@@ -9,8 +9,8 @@ contract StudentRegistry {
         uint[] scores;
         string fullName;
         bool status;
-        bool Enrolled;
-        bool Expelled;
+        // bool Enrolled;
+        // bool Expelled;
     } 
 
 // хешмап для присваивания адреса студенту
