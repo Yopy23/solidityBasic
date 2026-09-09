@@ -17,36 +17,36 @@ contract StudentRegistry {
 // хешмап для присваивания адреса студенту
     mapping(address => Student) public students;
 // список студентов
-    address[] public Registred = new address[]();
+    address[] public Registered;
 // количество студентов
     uint TotalStudents= 0; 
 
-contructor() {
-    students[msg.sender].status = True
-}
+    
+    constructor() {
+        students[msg.sender].status = true;
+    }
 
 
 // Конструктор для записи структуры студенту при инициализации
-    function RegisterStudent(string memory _fullName, uint _id, uint[] _scores, bool _status) {
+    function RegisterStudent(string memory _fullName, uint _id, uint[] memory _scores, bool _status) public  {
         students[msg.sender] = Student ({
             id: _id,
             scores: _scores,
             fullName: _fullName,
             status: _status
             // graduated обработка; 
-            // Enrolled: !_status; Expelled: _status});
+            // Enrolled: !_status; Expelled: _status
+            });
 
-            Registered.push(msg.sender);
-            TotalStudents+=1
-            
-
+        Registered.push(msg.sender);
+        TotalStudents+=1;
     } 
 
     // error StudentNotRegistered;
 
 
 // функция читает состояние и изменяет его поэтому ни view(чтение), ни pure(запись) не подходят
-    function StatusStudent() public returns (bool) {
+    function StatusStudent() public {
         if (students[msg.sender].status == false) { // обращение к полю status внутри students относительно адреса студента
             students[msg.sender].status = true; // также учитывает и Graduated
         }
@@ -55,12 +55,12 @@ contructor() {
         }  
     }
 
-    function AddScore (address studentAddress, uint[] memory _score) public returns (uint[] memory) {
+    function AddScore () public {
         uint additionalScore;
-    student[msg.sender].scores.push(additionalScore);      
+        students[msg.sender].scores.push(additionalScore);      
     }
 
-    function CalculateAverageScore(uint[] _score) public view returns (uint) {
+    function CalculateAverageScore(uint[] memory _score) public pure returns (uint) {
         uint length = _score.length;
         require(length>0, "No scores"); // обработка случая без оценок
         uint total;
@@ -74,22 +74,21 @@ contructor() {
     
    
     function ConvertGradeToLetter (uint Grade) public pure returns (string memory strGrade) {
-        if (90<Grade<100) {
+        if (90 <  Grade ||  Grade < 100 ) {
             strGrade = "A";
         }
 
-        if (75<Grade<89) {
+        if (75 < Grade || Grade < 89) {
             strGrade = "B";
         }
 
-        if (60<Grade<74) {
+        if (60 < Grade || Grade < 74) {
             strGrade = "C";
         }
 
-        if (0<Grade<60) {
+        if (0 < Grade || Grade < 60) {
             strGrade = "F";
         }
     }
 
 }
-
