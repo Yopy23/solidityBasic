@@ -8,66 +8,60 @@ contract StudentRegistry {
         uint id;
         uint[] scores;
         string fullName;
-        bool status;
-        // bool Enrolled;
-        // bool Expelled;
+        Status status;
+        bool exists;
     } 
+
+// Перечисление статуса
+    enum Status {Enrolled, Graduated, Expelled}
 
 //хранилище
 // хешмап для присваивания адреса студенту
     mapping(address => Student) public students;
 // список студентов
-    address[] public Registered;
+    address[] private studentAddress;// Registered;
 // количество студентов
-    uint TotalStudents= 0; 
+    uint totalStudentsCount; 
 
     
-    constructor() {
+    /*constructor() {
         students[msg.sender].status = true;
+    } */
+
+    function registerStudent(string memory _fullName) external {
+        if (students[msg.sender].exists = false) { // если студент не зарегистрирован
+        uint[] memory _scores;
+            students[msg.sender] = Student ({ // регистрируем
+                id: totalStudentsCount,
+                fullName: _fullName,
+                scores: _scores,
+                status : Status.Enrolled,
+                exists: true
+                });
+
+            studentAddress.push(msg.sender); // записываем в address[] private StudentAddress;
+            totalStudentsCount ++; // выдаем id
     }
-
-
-// Конструктор для записи структуры студенту при инициализации
-    function RegisterStudent(string memory _fullName, uint _id, uint[] memory _scores, bool _status) public  {
-        students[msg.sender] = Student ({
-            id: _id,
-            scores: _scores,
-            fullName: _fullName,
-            status: _status
-            // graduated обработка; 
-            // Enrolled: !_status; Expelled: _status
-            });
-
-        Registered.push(msg.sender);
-        TotalStudents+=1;
-    } 
-
-    // error StudentNotRegistered;
-
-
-// функция читает состояние и изменяет его поэтому ни view(чтение), ни pure(запись) не подходят
-    function StatusStudent() public {
-        if (students[msg.sender].status == false) { // обращение к полю status внутри students относительно адреса студента
-            students[msg.sender].status = true; // также учитывает и Graduated
-        }
         else {
-            revert("student is already enrolled or graduated");
-        }  
-    }
-
-    function AddScore () public {
-        uint additionalScore;
-        students[msg.sender].scores.push(additionalScore);      
-    }
-
-    function CalculateAverageScore(uint[] memory _score) public pure returns (uint) {
-        uint length = _score.length;
-        require(length>0, "No scores"); // обработка случая без оценок
-        uint total;
-        for (uint i = 0; i<length; i++){
-             total += _score[i];
+            require(students[msg.sender].exists = true, "Student already registered"); // по fullname
         }
-        uint AverageScore = total / length; // округляет в меньшую сторону
+    }
+
+    function AddScore (address _studentAddress, uint _score) external {
+        if (students[_studentAddress].exists = true && _score <= 100) 
+            students[_studentAddress].scores.push(_score);
+
+    }
+
+    function CalculateAverageScore(address _studentAddress) external view returns (uint) { //вводится адрес
+        uint Length = students[_studentAddress].scores.length;
+        require(students[_studentAddress].exists == false);
+        require(Length > 0, "0"); //случай без оценок
+        uint total;
+        for (uint i = 0; i<Length; i++){ // цикл для подсчета оценки
+             total += students[_studentAddress].scores[i];
+        }
+        uint AverageScore = total / Length; // округляет в меньшую сторону
         return AverageScore;
 
     }
@@ -91,4 +85,10 @@ contract StudentRegistry {
         }
     }
 
+    function getStudent (address _studentAddress) external view returns (uint, uint[] memory, string memory, Status ) {
+        Student memory st = students[_studentAddress];
+        return (st.id, st.scores, st.fullName, st.status);
+    }
+
 }
+
