@@ -22,7 +22,7 @@ contract StudentRegistry {
     uint TotalStudents= 0; 
 
 contructor() {
-
+    students[msg.sender].status = True
 }
 
 
@@ -57,7 +57,7 @@ contructor() {
 
     function AddScore (address studentAddress, uint[] memory _score) public returns (uint[] memory) {
         uint additionalScore;
-        //score.push(additionalScore);      
+    student[msg.sender].scores.push(additionalScore);      
     }
 
     function CalculateAverageScore(uint[] _score) public view returns (uint) {
