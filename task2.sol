@@ -14,7 +14,7 @@ contract RoleAccessHub {
     bool public isPaused;
     mapping(address => bool) public isBlacklisted;
     mapping(address => uint256) public userAccessLevel;
-
+    
     event Log(string message);
     
 
@@ -29,25 +29,37 @@ contract RoleAccessHub {
 
 // разрешает вызов только владельцу контракта (msg.sender == owner), иначе revert NotOwner(msg.sender).
     modifier onlyOwner () {
+        if (msg.sender != owner)
+            revert(NotOwner(msg.sender)); // require(msg.sender == owner, NotOwner(msg.sender))
         _;
     }
-//  проверяет, что указанный адрес не в бане, иначе revert AccountBlacklisted(account).
-    modifier notBlacklisted() {// address account) { // переменная на входе должна быть объявлена
+//  проверяет, что указанный адрес (не msd.sender) не в бане, иначе revert AccountBlacklisted(account).
+    modifier notBlacklisted(address account) {// address account) { // переменная на входе должна быть объявлена
+        if(isBlacklisted[account])
+            revert(AccountBlacklisted(account));
         _;
     }
 //  проверяет, что контракт активен, иначе revert ContractIsPaused()
     modifier whenNotPaused () {
+        if(isPaused)
+            revert(ContractIsPaused());
         _;
     }
 // проверяет, что уровень вызывающего >= minLevel.
     modifier requireLevel() {// uint256 minLevel) 
+        
+    
         _;
     }
 
 
 //  переключает паузу (isPaused = !isPaused).
     function togglePause() external onlyOwner {
-
+        if(isPaused)
+            isPaused = !isPaused
+            emit Log("contract is active now")
+        else
+            emit Log("contract is already active")
     }
 //  блокирует/разблокирует адрес.
     function setBlacklist(address _account, bool _status) external onlyOwner {
