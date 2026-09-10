@@ -12,8 +12,6 @@ contract RoleAccessHub {
     
     address public owner;
     bool public isPaused;
-    address[] public blacklistedOwners;
-    uint[] public ownerAccessLevels;
     mapping(address => bool) public isBlacklisted;
     mapping(address => uint) public userAccessLevel;
     
@@ -62,20 +60,18 @@ contract RoleAccessHub {
 
 //  блокирует/разблокирует адрес.
     function setBlacklist(address _account, bool _status) external onlyOwner {
-        _account = owner;
         if (_status = true) {// true - разблокирован
-            isBlacklisted[owner] = false;
+            isBlacklisted[_account] = false;
         }
         else {
-            isBlacklisted[owner] = true;
+            isBlacklisted[_account] = true;
         }
 
         }
 //  выставляет уровень (1–5).
     function setUserLevel(address _account, uint256 _level) external onlyOwner {
-        _account = owner;
         if (_level > 0 && _level <= 5)
-            ownerAccessLevels.push(_level);
+            userAccessLevel[_account] = _level;
         else 
             revert InvalidLevelValue(_level);
     }
