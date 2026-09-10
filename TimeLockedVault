@@ -1,0 +1,41 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract TimeLockedVault {
+
+    error InsufficientDeposit(uint256 sent, uint256 minRequired);
+    error ExceedsMaxLockDuration(uint256 requested, uint256 maxAllowed);
+    error LockPeriodActive(uint256 currentTime, uint256 unlockTime);
+    error NoFundsToWithdraw();
+    error EthTransferFailed();
+
+    struct LockBox {
+        uint balance;
+        uint unlockTimestamp;
+    }
+
+    mapping(address => LockBox) public vaults;
+
+
+    uint MIN_DEPOSIT = 0.01 ether;
+    uint MAX_DURATION = 365 days;
+
+    function deposit(uint256 _lockDuration) external payable {
+        require (msg.value >= MIN_DEPOSIT, EthTransferFailed());
+        require (_lockDuration <= MAX_DURATION, NoFundsToWithdraw());
+
+//  Рассчитывает новое время разблокировки: block.timestamp + _lockDuration. Если оно больше текущего unlockTimestamp, обновляет его.
+        uint newUnlockTimestamp = block.timestamp + _lockDuration;
+        // if (newUnlockTimestamp > LockBox.unlockTimestamp) {
+        
+        vaults[msg.sender].balance += msg.value;
+
+        receive() external payable;
+
+
+        }
+
+    }
+
+}
+
