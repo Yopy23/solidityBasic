@@ -12,40 +12,6 @@ contract RoleAccessHub {
     
     address public owner;
     bool public isPaused;
-    mapping(address => bool) public isBlacklisted;
-    mapping(address => uint256) public userAccessLevel;
-    
-    event Log(string message);
-    
-
-
-    constructor (address _initialOwner) {
-        owner = _initialOwner;
-        require(initialOwner != 0, InvalidAddress());
-        emit Log("Owner is initialized now!!!");
-    }
-
-
-
-// разрешает вызов только владельцу контракта (msg.sender == owner), иначе revert NotOwner(msg.sender).
-    modifier onlyOwner () {
-        if (msg.sender != owner)
-            revert(NotOwner(msg.sender)); // require(msg.sender == owner, NotOwner(msg.sender))
-        _;
-    }// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
-
-contract RoleAccessHub {
-    error NotOwner(address caller); //— вызывающий не является владельцем;
-    error AccountBlacklisted(address account); // — аккаунт находится в черном списке;
-    error ContractIsPaused(); // — вызов во время действия паузы;
-    error InvalidAddress(); // — передан нулевой адрес;
-    error InsufficientAccessLevel(uint256 current, uint256 required); // — недостаточный уровень доступа;
-    error InvalidLevelValue(uint256 level); // — недопустимое значение уровня доступа (например, выше 5).
-
-    
-    address public owner;
-    bool public isPaused;
     address[] public blacklistedOwners;
     uint[] public ownerAccessLevels;
     mapping(address => bool) public isBlacklisted;
@@ -85,11 +51,13 @@ contract RoleAccessHub {
 
 //  переключает паузу (isPaused = !isPaused).
     function togglePause() external onlyOwner {
-        if(isPaused)
+        if(isPaused) {
             isPaused = !isPaused;
             emit Log("contract is active now");
-        /* else
-            emit Log("contract is already active"); */
+        }
+        else {
+            emit Log("contract is already active");
+        }
     }
 
 //  блокирует/разблокирует адрес.
