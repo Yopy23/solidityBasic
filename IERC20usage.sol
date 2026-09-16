@@ -80,23 +80,3 @@ contract TokenLocker {
         lockedBalances[_tokenAddress][msg.sender] += _amount; //Увеличивает заблокированный баланс пользователя
     }
 }
-
-
-
-/*создатель получает токены
-можно:
-    перевести токены 
-    установить лимит расходов
-    проверить и уменьшить лимит, перевести средства from to
-    уменьшить свой баланс и общий totalsupply
-    
-отдельный контракт блокирует переводы, блокирует баланс*/
-
-/*
-Контракт TokenLocker:
-Предназначен для блокировки токенов стандарта ERC-20 на смарт-контракте.
-mapping(address => mapping(address => uint256)) public lockedBalances (токен => пользователь => сумма).
-Функция lockTokens(address _tokenAddress, uint256 _amount) external:
-Принимает адрес токена и приводит его к типу IERC20(_tokenAddress).
-Забирает токены у msg.sender на адрес самого локера address(this) через transferFrom.
-Увеличивает заблокированный баланс пользователя. */
