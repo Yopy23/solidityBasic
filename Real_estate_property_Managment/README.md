@@ -35,5 +35,10 @@ uint256 public previousTotalExplotationDuration; // срок эксплуата�
         uint256 public pledgeSum
         uint256 public pledgePeriod
 
+
+
+        
+        
+
         
         
