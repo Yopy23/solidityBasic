@@ -1,91 +1,100 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-interface IERC20 { 
-    function totalSupply () external;
-    function balanceOf (address) external;
-    function transfer (address _to, uint _amount) external;
-    function allowance (address _owner, address _spender) external;
-    function approve (address spender, uint256 _amount) external returns (bool);
-    function transferFrom (address _from, address _to, uint256 _amount) external returns (bool);
-
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-}
+import "./token.sol";
 
 contract RealEstateProperty {
 
-    address public ownerEstate; // переменные должны быть инициированы вне структуры для области видимости
-    bool public pledgedEstate; // в залоге (нет по умолчанию)
-    bool public residentialEstate; // жилая (нет по умолчанию)
-    uint256 public areaEstate; // площадь
-    uint256 public previousTotalExplotationDuration; // срок эксплуатации объекта на момент последней продажи
+    string public _sellObject;
+    // address public _ownerEstate;
 
 
-    error NotOwner(address); 
+    struct Property {
+        address ownerEstate; // переменные должны быть инициированы вне структуры для области видимости
+        bool pledgedEstate; // в залоге (нет по умолчанию)
+        bool residentialEstate; // жилая (нет по умолчанию)
+        uint256 areaEstate; // площадь
+        uint256 previousTotalExplotationDuration; // срок эксплуатации объекта на момент последней продажи 
+    }
 
-    event Log(string message);
+    struct SellProperty {
+        uint256 salePeriod; // если уже продано, =0
+        uint256 saleCost; // если продано, =0. цена должна быть больше 0, при gift цена 0 по умолчанию (токены не переводятся)
+    }
 
-    function sell (string memory sellObject, uint256 sellCost, bool sellRelevance) public {
+    mapping(address => address) public objectOwner; // владелец -> название собственности
+    mapping(address => Property) public object; // название собственности -> параметры собсвенности
+    mapping(address => uint256) public _balances; // баланс пользователя
+    mapping(address => bool) public sellRelevance; // обявления о продаже
+    mapping(address => SellProperty) public sellObjects;
+
+    // Property storage property = 
+
+    function saleAnnouncment (address _owner, address _saleObject) public {
+        require(_owner = msg.sender, "only owner");
+        sellRelevance[_saleObject] = true;
+    }
+
+    function cancelAnnouncment (address _owner, address _saleObject) public {
+        require(_owner = msg.sender, "only owner");
+        sellRelevance[_saleObject] = false;
+    }
+
+    function buy (address _buyer, address _owner, address _saleObject) public {
+        require(sellRelevance[_saleObject] = true, "object is not for sale");
+        if (_buyer != (0) && _owner != (0) && _saleObject != (0))
+            transferFrom(_buyer, _owner, sellObjects[_saleObject].salecost);
+                if (false)
+                    revert "transaction failed";
+        else
+            revert "invalid data"
+    }
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//     function createObject (
+//         address _ownerEstate,
+//         bool _pledgedEstate,
+//         uint256 _areaEstate,
+//         uint256 _previousTotalExplotationDuration,
+//         bool _residentialEstate ) public {
+
+//         Property.ownerEstate = _ownerEstate;
+//         Property.pledgedEstate = _pledgedEstate;
+
+//     }
+//     function createSell (
+//         string memory _sellObject,
+//         bool _residentialEstate,
+//         uint256 _sellCost,
+//         uint256 _salePeriod) public {
+
+//         Property storage property = object[_sellObject];
+
+//         Property.residentialEstate = _residentialEstate;
+//         Property.salePeriod = _salePeriod; 
+//         Property.saleCost = _sellCost;
+
+
+
         
-        }
-
-
-
-
-
-
-
-    // constructor (address _initialOwner) {
-    //     ownerEstate = _initialOwner;
-    //     require(_initialOwner != address(0), "");
-    //     emit Log("Owner is initialized now!!!");
-    // }
-
-    // modifier onlyOwner () {
-    //     if (msg.sender != ownerEstate) {
-    //         revert NotOwner(msg.sender);
-    //     }
-    //         _;
-    // }
-
-
-        // function transfer (address _to, uint _amount ) public { 
-    //     require(_balances[msg.sender] > 0, "balance is 0 tokens");
-    //     require(msg.sender != address(0), "address is 0");
-
-    //     _balances[msg.sender] -= _amount;
-    //     _balances[_to] += _amount;
-    // }
-
-    // function allowance (address spender) public view {
-    //     _allowances[msg.sender][spender];
-    // }
-
-    // //устанавливает лимит расходов для spender, генерирует Approval
-    // function approve (address spender, uint _amount) public returns (bool) { 
-    //     _allowances[msg.sender][spender] = _amount;
-    //     emit Approval(msg.sender, spender, _amount);
-    //     return true;
-    // }
-
-    // //позволяет любому держателю уменьшить свой баланс и общий totalSupply
-    // function burn(uint256 amount) public { 
-    //     require(msg.sender, "only msg sender can do this");
-    //     _balances[msg.sender] -= amount;
-    //     _totalSupply -= amount;
-    // }
-
-    // // проверяет и уменьшает allowance[from][msg.sender], переводит средства от from к to
-    // function transferFrom (address _from, address _to, uint256 _amount) public returns (bool) { 
-    //     require(_balances[_from] >= _amount, "sender does not have enough tokens");
-    //     require(_allowances[_from][msg.sender] >= _amount , "the write-off limit has been exceeded");
-
-    //     _balances[_from] -= _amount;
-    //     _balances[_to] += _amount;
-    //     _allowances[_from][msg.sender] -= _amount;
-    //     emit Transfer(_from, _to, _amount);
-    //     return true;
-
-}
-
+//         }
