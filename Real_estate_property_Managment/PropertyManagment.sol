@@ -27,8 +27,20 @@ contract RealEstateProperty {
     uint256 public propertyId;
     mapping (uint256 => Property) public properties; // id -> объект
     mapping(address => uint256[]) public ownedBy; // вдаледец -> id
+    mapping(uint256 => Sale) public sales;
 
     mapping(address => uint256) public _balances; // баланс пользователя
+
+    modifier KnowledgeOfObject () {
+    // проверки на object
+    _;
+    }
+
+    modifier KnowledgeOfSale () {
+    // проверки на sale
+    _;
+    }
+
 
     function createObject (
         address _ownerEstate, 
@@ -51,16 +63,37 @@ contract RealEstateProperty {
         ownedBy[_ownerEstate].push(objectId); // записываем один из возможно нескольких обектов в массив к владельцу
 
         return objectId;
-    }
+     } // event object created
 
-    function createSale (address _owner, uint objectId) public {
+    function saleAnnouncement(address _owner, uint objectId) public {
         require(_owner = msg.sender, "only owner");
         // проверить на наличие ошибок по всем параметрам чтобы убедиться что продающий знает что продает
-        properties[objectId] = true;
-    }
+        properties[objectId].saleRelevance = true;
+        sales[objectId] = Sale({
+        // параметры Sale
+        })
+        
+        sales[_ownerEstate].push(objectId);;
+
+    } // event the sale has been announced
+     
+    finction saleCancelling () {
+    // проверить на наличие ошибок и запросить овнерство к объекту
+    } // event sale is cancelled
+
+    function createSale () private payable {
+    Property storage p = properties[objectId];
+    Sale storage s = sales[objectId]
+    require (p.ownerEstate != (0));
+    //
+    
+    
+    uint256 _amount = s.price
+    bool success = transferFrom(msg.sender, address(this), _amount;
+    } // event
 
     function createGift () public {
-
+      
     }
 
     function createdGift () public {
