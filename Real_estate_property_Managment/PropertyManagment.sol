@@ -5,6 +5,9 @@ import "./token.sol";
 
 contract RealEstateProperty {
 
+    error NotEnoughFunds();
+
+    event Log(string message);
     // параметры объекта
     // обладатель // площадь // в залоге (нет по умолчанию) // жилая (нет по умолчанию)
     // срок эксплуатации объекта на момент последней продажи 
@@ -28,19 +31,28 @@ contract RealEstateProperty {
     mapping (uint256 => Property) public properties; // id -> объект
     mapping(address => uint256[]) public ownedBy; // вдаледец -> id
     mapping(uint256 => Sale) public sales;
+    uint[] public salesStack;
 
     mapping(address => uint256) public _balances; // баланс пользователя
 
     modifier KnowledgeOfObject () {
-    // проверки на object
-    _;
+        Property storage p = properties[objectId];
+        require (_ownerEstate = p.ownerEstate, "invalid ownerEstate");
+        require(_areaEstate = p.areaEstate, "invalid areaEstate");
+        require(_pledgedEstate = p.pledgedEstate, "the property is pledged");
+        require(_residentialEstate = p.residentialEstate, "invalid residentialEstate");
+        require(_previousTotalExplotationDuration = p.previousTotalExplotationDuration, "the time for selling the property has expired.");
+        require(_saleRelevance = p.saleRelevance, "the sale of the property is no longer relevant.");
+        _;
     }
 
     modifier KnowledgeOfSale () {
-    // проверки на sale
-    _;
+        Sale storage s = sales[objectId];
+        require(_price = s.price, "invalid price");
+        require(_buyer = s.buyer, "invalid buyer");
+        require(_deadline = s.deadline, "invalid deadline");
+        _;
     }
-
 
     function createObject (
         address _ownerEstate, 
@@ -63,34 +75,61 @@ contract RealEstateProperty {
         ownedBy[_ownerEstate].push(objectId); // записываем один из возможно нескольких обектов в массив к владельцу
 
         return objectId;
-     } // event object created
 
-    function saleAnnouncement(address _owner, uint objectId) public {
-        require(_owner = msg.sender, "only owner");
-        // проверить на наличие ошибок по всем параметрам чтобы убедиться что продающий знает что продает
+        emit Log("object created");
+
+     }
+
+    function saleAnnouncement(uint _objectId, uint256 _price, uint256 deadline) public {
+        require(ownedBy[_msg.sender] = _objectId, "check id accuracy or is it your object");
         properties[objectId].saleRelevance = true;
         sales[objectId] = Sale({
-        // параметры Sale
-        })
+            price: _price,
+            deadline: _deadline
+        });
         
-        sales[_ownerEstate].push(objectId);;
+        sales[_ownerEstate].push(objectId);
 
-    } // event the sale has been announced
-     
-    finction saleCancelling () {
-    // проверить на наличие ошибок и запросить овнерство к объекту
-    } // event sale is cancelled
+        emit Log("the sale is announced");
+        emit Log ("you can see info about sale and property by using getSale")
+    }
+
+    function getProperty () { 
+        
+    }
+         
+    finction saleCancelling () public {
+        require(ownedBy[_msg.sender] = _objectId, "check id accuracy or is it your object");
+        properties[objectId].saleRelevance = false;
+    }
 
     function createSale () private payable {
-    Property storage p = properties[objectId];
-    Sale storage s = sales[objectId]
-    require (p.ownerEstate != (0));
-    //
-    
+        Property storage p = properties[objectId];
+        Sale storage s = sales[objectId];
+        require(KnowledgeOfObject, "invalid data");
+        require (p.ownerEstate != (0));
     
     uint256 _amount = s.price
-    bool success = transferFrom(msg.sender, address(this), _amount;
-    } // event
+    if (msg.value > s.price) {
+        bool success = transferFrom(msg.sender, address(this), _amount);
+        require(success = true, "transfer failed");
+    } 
+    else {
+        revert NotEnoughFunds();
+    }
+
+    bool successConfirming = transferFrom(address(this), p.ownerEstate, _amount);
+    if (successConfirming = true) {
+        p.ownerEstate = msg.sender;
+    }
+    else {
+        revert "confirming reverted"
+    }
+
+    emit Log("the object is saled");
+    }
+
+    function
 
     function createGift () public {
       
