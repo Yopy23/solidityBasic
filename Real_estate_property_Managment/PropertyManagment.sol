@@ -7,187 +7,136 @@ contract RealEstateProperty {
 
     error NotEnoughFunds();
     error ConfirmingReverted();
+    error SaleExpired();
+    error NotGift();
 
-    event Log(string message);
-    // параметры объекта
-    // обладатель // площадь // в залоге (нет по умолчанию) // жилая (нет по умолчанию)
-    // срок эксплуатации объекта на момент последней продажи 
     struct Property {
         address ownerEstate; 
         uint256 areaEstate;
         bool pledgedEstate;
         bool residentialEstate;
-        uint256 previousTotalExplotationDuration; 
+        uint256 totalExplotationDuration; 
         bool saleRelevance;
     }
 
     struct Sale {
         uint256 price;
         uint256 deadline;
-        address buyer;
+        // address buyer;
     }
 
-    // владелец -> объект -> id
     uint256 public propertyId;
     mapping (uint256 => Property) public properties; // id -> объект
     mapping(address => uint256[]) public ownedBy; // вдаледец -> id
     mapping(uint256 => Sale) public sales;
-    uint[] public salesStack;
-
-    mapping(address => uint256) public _balances; // баланс пользователя
-
-    modifier KnowledgeOfObject (
-        address _ownerEstate, 
-        uint256 _areaEstate,
-        bool _pledgedEstate,
-        bool _residentialEstate,
-        uint256 _previousTotalExplotationDuration,
-        uint256 objectId) {
-        Property storage p = properties[objectId];
-        require (_ownerEstate = p.ownerEstate, "invalid ownerEstate");
-        require(_areaEstate = p.areaEstate, "invalid areaEstate");
-        require(_pledgedEstate = p.pledgedEstate, "the property is pledged");
-        require(_residentialEstate = p.residentialEstate, "invalid residentialEstate");
-        require(_previousTotalExplotationDuration = p.previousTotalExplotationDuration, "the time for selling the property has expired.");
-        require(_saleRelevance = p.saleRelevance, "the sale of the property is no longer relevant.");
-        _;
-    }
-
-    modifier KnowledgeOfSale (uint256 objectId) {
-        Sale storage s = sales[objectId];
-        require(_price = s.price, "invalid price");
-        require(_buyer = s.buyer, "invalid buyer");
-        require(_deadline = s.deadline, "invalid deadline");
-        _;
-    }
-
-    modifier OnlyObjectOwner () {
-        ownedBy[_msg.sender] = _objectId;
-        _;
-    }
 
     function createObject (
         address _ownerEstate, 
         uint256 _areaEstate,
         bool _pledgedEstate,
         bool _residentialEstate,
-        uint256 _previousTotalExplotationDuration
+        uint256 _totalExplotationDuration,
+        uint256 Id
     )   public returns (uint256) {
 
-        uint256 objectId = ++propertyId; 
+        Id = ++propertyId; 
 
-        properties[objectId] = Property({ // записываем параметры объекта и присываиваем id
+        properties[Id] = Property({ // заполняется properties
             ownerEstate: _ownerEstate,
             areaEstate: _areaEstate,
             pledgedEstate: _pledgedEstate,
             residentialEstate: _residentialEstate,
-            previousTotalExplotationDuration: _previousTotalExplotationDuration
+            totalExplotationDuration: _totalExplotationDuration,
+            saleRelevance: false
         });
 
-        ownedBy[_ownerEstate].push(objectId); // записываем один из возможно нескольких обектов в массив к владельцу
+        ownedBy[_ownerEstate].push(Id); // заполняется ownedBy
 
-        return objectId;
+        return Id;
+    }
 
-        emit Log("object created");
-
-     }
-
-
-    function saleAnnouncement(uint _objectId, uint256 _price, uint256 _deadline) public {
-        require(OnlyObjectOwner, "check id accuracy or is it your object");
-        properties[_objectId].saleRelevance = true;
-        sales[_objectId] = Sale({
+// при создании продажи указываются
+    function saleAnnouncmentOrGift(uint _Id, uint _price, uint _deadline) public {
+        require(_Id != 0, "create object first");
+        require(msg.sender == properties[_Id].ownerEstate, "only owner");
+        properties[_Id].saleRelevance = true; // заполняется sales
+        sales[_Id] = Sale({
             price: _price,
             deadline: _deadline
         });
-        
-        sales[_ownerEstate].push(_objectId);
-
-        emit Log("the sale is announced");
-        emit Log ("you can see info about sale and property by using getSale");
     }
 
-    function createSale () private payable {
-        require (OnlyObjectOwner, "check id accuracy or is it your object");
-        require(KnowledgeOfObject, "invalid data");
-        Property storage p = properties[objectId];
-        Sale storage s = sales[objectId];
+
+        /* теперь заполнены:
+             properties[_Id], все созданные объекты 
+             ownedBy[msg.sender],    все владельцы
+             sales[_Id],      все доступные для продажи объекты */
+
+
     
-    uint256 _amount = s.price;
-    if (msg.value > s.price & saleRelevance = true) {
-        bool success = transferFrom(msg.sender, address(this), _amount);
-        require(success = true, "transfer failed");
-    } 
-    else if ()
-    else {
-        revert NotEnoughFunds();
-    }
-
-    if (saleRelevance = true) {
-        bool successConfirming = transferFrom(address(this), p.ownerEstate, _amount);
-        if (successConfirming = true) {
-            p.ownerEstate = msg.sender;
+// возможнось возврата средств если не подтвердил продавец
+    function objectSale (address contractAddress, uint256 _Id) public payable {
+        require(_Id != 0, "create object first");
+        require(msg.sender == properties[_Id].ownerEstate, "only owner");
+        Property storage p = properties[_Id];
+        Sale storage s = sales[_Id];
+        uint price = s.price;
+        if (msg.value > s.price && p.saleRelevance == true) {
+            bool success = IERC20(contractAddress).transfer(msg.sender, address(this), price); 
+            require(success == true, "transfer failed");
         }
         else {
-            revert ConfirmingReverted();
+            revert NotEnoughFunds();
         }
-    else {
-        revert SaleExpired();
-        bool success = transferFrom(address(this), msg.sender,_amount);
-    }
-    
 
-    emit Log("the object is saled");
-    }
-
-    function cancellSale () public {
-        require(OnlyObjectOwner, "check id accuracy or is it your object");
-        properties[objectId].saleRelevance = false;
-    }
-
-    function returnFundscuz () public {
-    //  возможность возврата средств покупателю, если продавец отказывается от 
-    // продажи, срок эксплуатации должен остаться таким, каким он был до 
-    // продажи.
-    }
-
-    
- - возможность возврата средств покупателю, если продавец не подтвердил и 
-
-// закончился срок продажи, срок эксплуатации должен остаться таким, каким 
-
-// он был до продажи. - механизм подтверждения получения средств продавцом
-
-    function createGift () public {
-        // проверить 
-        Property storage p = properties[objectId];
-        Sale storage s = sales[objectId];
-        require(KnowledgeOfObject, "invalid data");
-        require (p.ownerEstate != (0));
-    
-    uint256 _amount = s.price;
-    bool success = transferFrom(msg.sender, address(this), _amount);
-    // передать лог о том что отправплена заявка на подарок
-    require(success = true, "transfer failed");
-
-    bool successConfirming = transferFrom(address(this), p.ownerEstate, _amount);
-    if (successConfirming = true) {
-        p.ownerEstate = msg.sender;
-    }
-    else {
-        revert ; // 
-    }
-
-    emit Log("the object is saled");
-    }
-
-    function createPledge () {
+        if (p.saleRelevance == true) {
+            bool successConfirming = IERC20(contractAddress).transfer(msg.sender, address(this), price);
+                if (successConfirming == true) {
+                    p.ownerEstate = msg.sender;
+                    p.totalExplotationion += block.timestamp;
+                    p.saleRelevance = false;
+                }
+                else {
+                    revert ConfirmingReverted();
+                }
+        }
+        else {
+            revert SaleExpired();
+            bool success = IERC20(contractAddress).transferFrom(address(this), msg.sender, price);
+        }
 
     }
+
+// возможность отмены продажи - возможность возврата средств покупателю, если продавец отказывается от 
+// продажи, срок эксплуатации должен остаться таким, каким он был до продажи
+    // function cancelSale (uint _Id) public {
+    //     properties[_Id].saleRelevance = false;
+    //     sales[_Id] = (0);
+    // } 
+
+    function objectGift (uint _Id, address addressee ) public payable {
+        require(_Id != 0, "create object first");
+        require(msg.sender == properties[_Id].ownerEstate, "only owner");
+        Property storage p = properties[_Id];
+        Sale storage s = sales[_Id];
+        if (s.price == 0) {
+            revert NotGift();
+        }
+        
+        bool success = IERC20(contractAddress).transfer(msg.sender, addressee, 0); 
+        require(success == true, "transfer failed");
+                p.ownerEstate = msg.sender;
+                p.totalExplotationion += block.timestamp;
+                p.saleRelevance = false;
+            }
+       
+        
+    function objectPledge (uint _Id) public {
+        require(_Id != 0, "create object first");
+        require(msg.sender == properties[_Id].ownerEstate, "only owner");
+    } 
+
+
+
 
 }
-
-
-// objectId вынести в отдельное поле
-
-.
