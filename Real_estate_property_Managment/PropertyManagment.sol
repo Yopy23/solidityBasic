@@ -33,9 +33,9 @@ contract RealEstateProperty {
     createGift
     createPledge
 
-    saleObject // структура отдается туда-то так-то и удаляется из списка
-    giveGift
-    giveAsPledge
+    requestSale // структура отдается туда-то так-то и удаляется из списка
+    requestGift
+    requestPledge
 
     cancelSale // структура просто удаляется из списка
     cancelGift
