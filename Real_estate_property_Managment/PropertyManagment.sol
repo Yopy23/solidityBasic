@@ -25,8 +25,15 @@ contract RealEstateProperty {
         // address buyer;
     }
 
-    struct Gift {}
-    struct Pledge {}
+    struct Gift {
+    address addressee;
+    uint256 deadline;
+}
+    struct Pledge {
+    address pledgor;
+    uint255 amount;
+    
+}
 
 
     createObject // создаётся структура
