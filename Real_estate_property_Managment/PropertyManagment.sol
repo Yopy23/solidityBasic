@@ -25,6 +25,27 @@ contract RealEstateProperty {
         // address buyer;
     }
 
+    struct Gift {}
+    struct Pledge {}
+
+
+    createObject // создаётся структура
+    createGift
+    createPledge
+
+    saleObject // структура отдается туда-то так-то и удаляется из списка
+    giveGift
+    giveAsPledge
+
+    cancelSale // структура просто удаляется из списка
+    cancelGift
+    cancelPledge
+
+    confirmSale // структура переходит во владение другому человеку и удаляется из списка 
+    confirmGift
+    confirmPledge
+
+
     uint256 public propertyId;
     mapping (uint256 => Property) public properties; // id -> объект
     mapping(address => uint256[]) public ownedBy; // вдаледец -> id
