@@ -15,9 +15,10 @@ contract RealEstateProperty {
     mapping(uint256 => Gift) public gifts;
 
     mapping(uint256 => Pledge) public pledges;
-    mapping(uint265 => address) public pledgorOf;
+    mapping(uint256 => address) public pledgorOf;
+    mapping(uint256 => uint256) public pledgePrice;
 
-    struct Property {
+    struct Property { 
         address ownerEstate;
         uint256 areaEstate;
         bool residentialEstate;
@@ -36,16 +37,16 @@ contract RealEstateProperty {
         address recipient;
     }
 
-    struct Pledge (
+    struct Pledge {
         uint256 amount;
-        uint256 duration;
+        uint256 deadline;
         bool active;
         address pledgor;
-    )
+        address pledgee;
+        uint256 whenDeadlineActivated;
+    }
 
     ProfiCoin profiCoin;
-
-    event Log();
 
     constructor(address _ProfiCoin) {
         profiCoin = ProfiCoin(_ProfiCoin);
@@ -81,14 +82,12 @@ contract RealEstateProperty {
         properties[propertyId].isSale = true;
     }
 
-    //покупатель
     function saleRequest (uint256 propertyId) public {
         require(sales[propertyId].price > 0);
-        require(buyerOf[propertyId]  == (0));
+        require(buyerOf[propertyId]  == address(0));
+        Sale storage sale = sales[propertyId];
 
-        proficoin.transfer(msg.sender, address(this), sale.price);
-
-        emit Log("реквест на покупку имущества с id ", propertyId, " отправлен от ", msg.sender )
+        profiCoin.transfer(msg.sender, address(this), sale.price);
         buyerOf[propertyId] = msg.sender;
         salePrice[propertyId] = sale.price;
         properties[propertyId].isSale = false;
@@ -96,32 +95,47 @@ contract RealEstateProperty {
 
     function saleConfirm (uint propertyId) public {
         Property storage property = properties[propertyId];
-        Sale storage sale = sales[propertyId];
 
         require(properties[propertyId].ownerEstate == msg.sender, "Only owner");
-        require(buyerOf[propertyId] != (0));
+        require(buyerOf[propertyId] != address(0));
 
-        proficoin.transfer(address(this), msg.sender, salePrice[propertyId]);
+        profiCoin.transfer(address(this), msg.sender, salePrice[propertyId]);
         property.ownerEstate = buyerOf[propertyId];
-        ownedBy[propertyId] = buyerOf[propertyId];
-        totalExplotationDuration += block.timestamp;
+        property.totalExplotationDuration += block.timestamp;
 
-        delete buyerOF[propertyId];
+        delete buyerOf[propertyId];
         delete salePrice[propertyId];
         delete sales[propertyId];
     }
 
     function saleCancel (uint256 propertyId) public {
         require(msg.sender == properties[propertyId].ownerEstate);
-        proficoin.transfer(address(this), buyerOd[propertyID], salePrice[propertyId]);
-        buyerOf[propertyId] = (0); 
-        ownedBy[propertyId] = (0);
+        profiCoin.transfer(address(this), buyerOf[propertyId], salePrice[propertyId]);
+        buyerOf[propertyId] = address(0); 
 
         delete buyerOf[propertyId];
         delete salePrice[propertyId];
     }
 
-    function createPledge (uint256 propertyId, uint256 amount, uint256 duration, address pledgor) public {
+    function createGift (uint256 propertyId, address _recipient ) public {
+        require(properties[propertyId].isGift = false);
+        require(msg.sender == properties[propertyId].ownerEstate);
+        properties[propertyId].isGift = true;
+        gifts[propertyId].recipient = _recipient;
+        properties[propertyId].isGift = true;
+    }
+
+    function giftConfirm (uint256 propertyId) public {
+        require(properties[propertyId].isGift = true);
+        require(msg.sender == gifts[propertyId].recipient);
+        properties[propertyId].ownerEstate = msg.sender;
+    }
+
+    function giftCancel (uint256 propertyId) public {
+        properties[propertyId].isGift = false;
+    }
+
+    function createPledge (uint256 propertyId, uint256 amount, uint256 deadline, address pledgor) public {
         Property storage property = properties[propertyId];
         require(property.isSale == false);
         require(property.isGift == false);
@@ -129,37 +143,48 @@ contract RealEstateProperty {
 
         pledges[propertyId] = Pledge ({
             amount: amount,
-            duration: duration,
-            pledgor: pledgor
-        })
+            deadline: deadline,
+            pledgor: pledgor,
+            pledgee: msg.sender,
+            whenDeadlineActivated: 0,
+            active: false
+        });
 
         property.isPledge = true;
-
-        emit Log();
+        pledgePrice[propertyId] = amount;
     }
 
 
     function pledgeConfirm (uint256 propertyId) public {
-        Property storage property = properties[propertyId];
+        require(msg.sender == pledges[propertyId].pledgor);
         Pledge storage pledge = pledges[propertyId];
-
         pledge.active = true;
+        profiCoin.transfer(msg.sender, pledge.pledgee, pledgePrice[propertyId]);
+        pledge.whenDeadlineActivated = block.timestamp;
     }
 
+    function pledgeCancel (uint256 propertyId) public {
+        Pledge storage pledge = pledges[propertyId];
+        require(pledge.active = true);
+        pledges[propertyId].active = false;
+        properties[propertyId].isPledge = false;
 
-
-
-
-
-    function createGift (uint256 propertyID, address _recipient ) public {
-        require(msg.sender == properties[propertyId].ownerEstate);
-        property[propertyID].isGift = true;
-        gifts[propertyId].receipient = _recipient;
-        property[propertyId].isGift = true;
+        delete pledges[propertyId];
     }
 
-    function giftConfirm (propertyId) public {
-        require(msg.sender == gifts[propertyId].receipient)
-        property[propertyId].ownerEstate = msg.sender
+    function returnFunds (uint256 propertyId) public {
+        Pledge storage pledge = pledges[propertyId];
+        require(msg.sender == pledge.pledgee);
+        require(pledge.deadline - pledge.whenDeadlineActivated > 0);
+        profiCoin.transfer(msg.sender, pledge.pledgor, pledgePrice[propertyId]);
+    }
+
+    function pledgeExpired (uint256 propertyId) public {
+        Pledge storage pledge = pledges[propertyId];
+        Property storage property = properties[propertyId];
+        require(msg.sender == pledge.pledgor);
+        if (pledge.deadline - pledge.whenDeadlineActivated < 0) {
+            property.ownerEstate = msg.sender;      
+        }
     }
 }
