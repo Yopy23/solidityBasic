@@ -29,7 +29,7 @@ contract RealEstateProperty {
 
     struct Sale {
         uint256 price;
-        uint256 
+        uint256 saleDuration;
     }
 
     struct Gift {
@@ -39,6 +39,8 @@ contract RealEstateProperty {
     struct Pledge (
         uint256 amount;
         uint256 duration;
+        bool active;
+        address pledgor;
     )
 
     ProfiCoin profiCoin;
@@ -119,15 +121,16 @@ contract RealEstateProperty {
         delete salePrice[propertyId];
     }
 
-    function createPledge (uint256 propertyId, uint256 amount, uint256 duration) public {
+    function createPledge (uint256 propertyId, uint256 amount, uint256 duration, address pledgor) public {
         Property storage property = properties[propertyId];
         require(property.isSale == false);
         require(property.isGift == false);
         property.isPledge = true;
 
-        pledgeOffers[propertyId] = PledgeOffer ({
+        pledges[propertyId] = Pledge ({
             amount: amount,
-            duration: duration
+            duration: duration,
+            pledgor: pledgor
         })
 
         property.isPledge = true;
@@ -135,17 +138,12 @@ contract RealEstateProperty {
         emit Log();
     }
 
-    function pledgeRequest (uint256 propertyId) public {
-        Property storage property = properties[propertyId];
-        Pledge storage pledge = pledges[propertyId];
-
-        proficoin.transfer(msg.sender, address(this), pledge.amount)
-        // вроде дописано (такое)
-    }
 
     function pledgeConfirm (uint256 propertyId) public {
         Property storage property = properties[propertyId];
-        // не дописано
+        Pledge storage pledge = pledges[propertyId];
+
+        pledge.active = true;
     }
 
 
@@ -157,14 +155,11 @@ contract RealEstateProperty {
         require(msg.sender == properties[propertyId].ownerEstate);
         property[propertyID].isGift = true;
         gifts[propertyId].receipient = _recipient;
-    }
-
-    function giftRequest (propertyId) public {
-        require(msg.sender == properties[propertyId].ownerEstate);
-        // не дописано
+        property[propertyId].isGift = true;
     }
 
     function giftConfirm (propertyId) public {
-
+        require(msg.sender == gifts[propertyId].receipient)
+        property[propertyId].ownerEstate = msg.sender
     }
 }
