@@ -28,6 +28,8 @@ contract RealEstateProperty {
         uint256 timeAfter;          // время после которого продажа не актуальна
         address buyer;              // покупатель
         address seller;             // продавец
+        uint256 arrayIndex;         // индекс в массиве всех покупок
+        uint256 awaitIndex          // все покупки ожидающие подтверждения
     }
 
     struct Gift {
@@ -88,8 +90,6 @@ contract RealEstateProperty {
             isSale: false
         });
 
-        allProperties.push(propertyId); //
-
         return Id;
     }
 
@@ -103,10 +103,11 @@ contract RealEstateProperty {
             saleDuration: saleDuration,
             timeAfter: block.timestamp + saleDuration,
             buyer: address(0),
-            seller: msg.sender
+            seller: msg.sender,
+            arrayIndex: 0,
+            awaitIndex: 0
         });
         properties[propertyId].isSale = true;
-        allSales.push(propertyId);
     }
 
     // запрос на покупку 
@@ -132,7 +133,8 @@ contract RealEstateProperty {
         property.ownerEstate = sales[propertyId].buyer; 
         property.totalExplotationDuration += sales[propertyId].saleDuration;
 
-        delete sales[propertyId];
+        _removePurchasesAwaitingConfirmation(propertyId);
+        allSales.push(propertyId);
     }
 
     // отмена продажи 
@@ -142,7 +144,8 @@ contract RealEstateProperty {
         profiCoin.transfer(address(this), sales[propertyId].buyer, sales[propertyId].price);
         properties[propertyId].isSale = false;
 
-        delete sales[propertyId];
+        _removeSale(propertyId); 
+        _removePurchasesAwaitingConfirmation(propertyId);
     }
 
     function buyerCancelSale(uint256 propertyId) public {
@@ -151,7 +154,8 @@ contract RealEstateProperty {
         profiCoin.transfer(address(this), msg.sender, sales[propertyId].price);
         properties[propertyId].isSale = false;
 
-        delete sales[propertyId];
+        _removeSale(propertyId); 
+        _removePurchasesAwaitingConfirmation(propertyId);
     }
 
     // создание подарка + реквест
@@ -166,6 +170,8 @@ contract RealEstateProperty {
             sender: msg.sender
         });
         properties[propertyId].isGift = true;
+
+        allGifts.push(propertyId);
     }
 
     // подтверждение получения подарка
@@ -182,7 +188,8 @@ contract RealEstateProperty {
         require(properties[propertyId].isGift = true);
         require(gifts[propertyId].recipient == msg.sender, "only receiver can do it");
         properties[propertyId].isGift = false;
-        delete gifts[propertyId];
+
+        _removeGift(propertyId);
     }
 
     function ownerCancelGift (uint256 propertyId) public {
@@ -190,6 +197,8 @@ contract RealEstateProperty {
         require(gifts[propertyId].sender == msg.sender, "only receiver can do it");
         properties[propertyId].isGift = false;
         delete gifts[propertyId];
+
+        _removeGift(propertyId);
     }
 
     // создание преджложения о залоге 
@@ -227,6 +236,8 @@ contract RealEstateProperty {
         require(msg.sender == pledges[propertyId].pledgor, "only pledgor can do it");
         require(block.timestamp > pledges[pledgeId]deadline, "pledge haven`t expired");
         properties[propertyId].ownerEstate = msg.sender;
+
+        _removePledge(propertyId);
     }
 
     // вернуть средства по залогу
@@ -235,10 +246,74 @@ contract RealEstateProperty {
         require(block.timestamp < pledges[pledgeId]deadline, "pledge expired");
         profiCoin.transfer(msg.sender, pledges[propertyId].pledgor, pledges[propertyId].amount);
         properties[propertyId].ownerEstate = msg.sender;
+
+        _removePledge(propertyId);
     }
 
+    // remove
+    function _removeGift (propertyId) public {
+        uint256 index = gifts[propoertyId].arrayIndex;
+        uint256 lastId = allGifts[allGIfts.length -1];
+
+        if (lastId != _giftId) {
+          giftIds[index] = lastId;
+          gifts[lastId].arrayIndex = index;
+          }
+
+        allGifts.pop();
+
+        delete gifts[propertyId];
+    }
+
+    function _removePledge (uint256 propertyId) public {
+        uint256 index = pledges[propertyId].arrayIndex;
+        uint256 lastId = allPledges[allPledges.length - 1];
+
+        if (lastId != _depositId) {
+            depositIds[index] = lastId;
+            deposits[lastId].arrayIndex = index;
+        }
+
+        depositIds.pop();
+
+        delete deposits[_depositId];
+    }
+
+    function _removeSale (propertyId) public {
+        uint256 index = sales[propertyId].arrayIndex;
+        uint256 lastId = allSales[allSales.length - 1];
+
+        if lastId != propertyId {
+          allSales[index] = lastId;
+          sales[lastId].arrayIndex = index;
+        }
+        
+        allSales.pop();
+
+        delete sales[propertyId];
+    }
+
+    function _removeSaleOffer (propertyId) public {}
+
+    function _removePledgeOffers (propertyId) public {}
+
+    function _removePurchasesAwaitingConfirmation (propertyId) public {
+        uint256 index = sales[propertyId].awaitIndex;
+        uint256 lastId = allPurchasesAwaitingConfirmation[allPurchasesAwaitingConfirmation.length - 1];
+
+        if lastId != propertyId {
+          allPurchasesAwaitingConfirmation[index] = lastId;
+          sales[lastId].arrayIndex = index;
+        }
+        
+        allPurchasesAwaitingConfirmation.pop();
+
+        delete sales[propertyId];
+    }
+
+
     function getProperties () public returs (uint[] memory) {
-        return AllProperties;
+        return ;
     }
     function getSaleOffers () public returs (uint[] memory) {
         return AllSaleOffers;
