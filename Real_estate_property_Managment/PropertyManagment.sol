@@ -76,7 +76,7 @@ contract RealEstateProperty {
 
         uint256 propertyId = ++Id; 
         properties[Id] = Property({ // заполняется properties
-            Id: Id,
+            Id: propertyId,
             ownerEstate: _ownerEstate,
             areaEstate: _areaEstate,
             residentialEstate: _residentialEstate,
@@ -330,7 +330,7 @@ contract RealEstateProperty {
     // function getPledgeOffers () public returns(uint[] memory) {
     //     return allPledgeOffers;
     // }
-    function getPledges () public returns(uint[] memory) {
+    function getPledges () public view returns(uint[] memory) {
         return allPledges;
     }
 
